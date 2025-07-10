@@ -18,9 +18,8 @@
  * MF-RC522 board.
  *
  * There are three hardware components involved:
- * 1) The micro controller: An Raspberry Pi Pico
- * 2) The PCD (short for Proximity Coupling Device): NXP MFRC522 / WS18505 Contactless
- * Reader IC
+ * 1) The microcontroller: An Raspberry Pi Pico
+ * 2) The PCD (short for Proximity Coupling Device): MFRC522 / WS18505 Contactless Reader IC
  * 3) The PICC (short for Proximity Integrated Circuit Card): A card or tag using the
  * ISO 14443A interface, eg Mifare or NTAG203.
  *
@@ -104,7 +103,7 @@
 
 #endif
 
-#define DEBUG_RFID_2
+// #define DEBUG_RFID_2
 #ifdef  DEBUG_RFID_2
 #define rfid_debug(fmt, arg...) \
 do {                       \
@@ -155,6 +154,19 @@ const uint8_t FM17522_firmware_reference[] = {
     0xF5, 0x3C, 0x11, 0x8F, 0x15, 0xC3, 0xD7, 0xC1, 0x5B, 0x00, 0x2A,
     0xD0, 0x75, 0xDE, 0x9E, 0x51, 0x64, 0xAB, 0x3E, 0xE9, 0x15, 0xB5,
     0xAB, 0x56, 0x9A, 0x98, 0x82, 0x26, 0xEA, 0x2A, 0x62};
+
+// A class used for passing the UID of a PICC.
+class Uid {
+public:
+    bool operator == (const Uid &other) const;
+
+public:
+    uint8_t size;  // Number of bytes in the UID. 4, 7 or 10.
+    uint8_t uidByte[10];
+    uint8_t sak;  // The SAK (Select acknowledge) byte returned from the PICC after successful selection.
+
+};
+
 
 class RFID_2 {
 public:
@@ -373,14 +385,6 @@ public:
         STATUS_CRC_WRONG   = 8,  // The CRC_A does not match
         STATUS_MIFARE_NACK = 9   // A MIFARE PICC responded with NAK.
     };
-
-    // A struct used for passing the UID of a PICC.
-    typedef struct {
-        uint8_t size;  // Number of bytes in the UID. 4, 7 or 10.
-        uint8_t uidByte[10];
-        uint8_t sak;  // The SAK (Select acknowledge) byte returned from the PICC
-                   // after successful selection.
-    } Uid;
 
     // A struct used for passing a MIFARE Crypto1 key
     typedef struct {

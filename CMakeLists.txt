@@ -5,4 +5,4 @@ target_sources(pico_rfid_2 INTERFACE
         )
 
 target_include_directories(pico_rfid_2 INTERFACE ${CMAKE_CURRENT_LIST_DIR}/api)
-target_link_libraries(pico_rfid_2 INTERFACE pico_interfaces pico_stdlib hardware_gpio hardware_i2c)
+target_link_libraries(pico_rfid_2 INTERFACE pico_stdlib hardware_gpio hardware_i2c)

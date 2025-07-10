@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Adam Boardman
+ * SPDX-FileCopyrightText: 2025, Adam Boardman
  *
  * SPDX-License-Identifier: Apache-2.0
  */

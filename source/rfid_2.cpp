@@ -19,8 +19,19 @@
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////
-// Functions for setting up the Arduino
+// Functions for setting up the RFID_2
 /////////////////////////////////////////////////////////////////////////////////////
+
+bool Uid::operator==(const Uid &other) const {
+    if (this->size == other.size && sak == other.sak) {
+        for (int i=0; i<this->size; i++) {
+            if (this->uidByte[i] != other.uidByte[i])
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
 
 /**
  * Constructor.
@@ -82,13 +93,13 @@ int RFID_2::PCD_ReadRegister(uint8_t reg  ///< The register to read from. One of
     uint8_t buffer = 0;
     int result;
     result = i2c_write_blocking(i2c, address,  &reg, 1, true);
-    rfid_debug("i2c_write_blocking: %d\n",result);
+    rfid_debug("PCD_ReadRegister i2c_write_blocking: %d\n",result);
     if (result == PICO_ERROR_GENERIC) {
         return result;
     }
 
     result = i2c_read_blocking(i2c, address, &buffer, 1, false);
-    rfid_debug("i2c_read_blocking: %d, read: %d\n",result, buffer);
+    rfid_debug("PCD_ReadRegister i2c_read_blocking: %d, read: %d\n",result, buffer);
     if (result == PICO_ERROR_GENERIC)
         return result;
 
@@ -111,13 +122,13 @@ int RFID_2::PCD_ReadRegister(uint8_t reg,      ///< The register to read from. O
 
     int result;
     result = i2c_write_blocking(i2c, address,  &reg, 1, true);
-    rfid_debug("i2c_write_blocking: %d\n",result);
+    rfid_debug("PCD_ReadRegister i2c_write_blocking: %d\n",result);
     if (result == PICO_ERROR_GENERIC) {
         return result;
     }
 
     result = i2c_read_blocking(i2c, address, values, count, false);
-    rfid_debug("i2c_read_blocking: %d, read: ", result);
+    rfid_debug("PCD_ReadRegister i2c_read_blocking: %d, read: ", result);
     for (int i=0; i<count; i++) {
         rfid_debug("%d,", values[i]);
     }
@@ -258,10 +269,12 @@ void RFID_2::PCD_Reset()
     // 37,74�s. Let us be generous: 50ms.
     sleep_us(50);
     // Wait for the PowerDown bit in CommandReg to be cleared
-    while (PCD_ReadRegister(CommandReg) & (1 << 4)) {
+    int reg = 0;
+    do {
+        reg = PCD_ReadRegister(CommandReg);
         // PCD still restarting - unlikely after waiting 50ms, but better safe
         // than sorry.
-    }
+    }  while (reg >= PICO_OK && reg & (1 << 4));
 }  // End PCD_Reset()
 
 /**
@@ -1403,35 +1416,35 @@ void RFID_2::PICC_PrintTypeName(uint8_t piccType  ///< One of the PICC_Type enum
 {
     switch (piccType) {
         case PICC_TYPE_ISO_14443_4:
-            printf("PICC compliant with ISO/IEC 14443-4");
+            printf("PICC compliant with ISO/IEC 14443-4\n");
             break;
         case PICC_TYPE_ISO_18092:
-            printf("PICC compliant with ISO/IEC 18092 (NFC)");
+            printf("PICC compliant with ISO/IEC 18092 (NFC)\n");
             break;
         case PICC_TYPE_MIFARE_MINI:
-            printf("MIFARE Mini, 320 bytes");
+            printf("MIFARE Mini, 320 bytes\n");
             break;
         case PICC_TYPE_MIFARE_1K:
-            printf("MIFARE 1KB");
+            printf("MIFARE 1KB\n");
             break;
         case PICC_TYPE_MIFARE_4K:
-            printf("MIFARE 4KB");
+            printf("MIFARE 4KB\n");
             break;
         case PICC_TYPE_MIFARE_UL:
-            printf("MIFARE Ultralight or Ultralight C");
+            printf("MIFARE Ultralight or Ultralight C\n");
             break;
         case PICC_TYPE_MIFARE_PLUS:
-            printf("MIFARE Plus");
+            printf("MIFARE Plus\n");
             break;
         case PICC_TYPE_TNP3XXX:
-            printf("MIFARE TNP3XXX");
+            printf("MIFARE TNP3XXX\n");
             break;
         case PICC_TYPE_NOT_COMPLETE:
-            printf("SAK indicates UID is not complete.");
+            printf("SAK indicates UID is not complete.\n");
             break;
         case PICC_TYPE_UNKNOWN:
         default:
-            printf("Unknown type");
+            printf("Unknown type\n");
             break;
     }
 }  // End PICC_GetTypeName()
@@ -1450,10 +1463,6 @@ void RFID_2::PICC_DumpToSerial(Uid *uid  ///< Pointer to Uid struct returned
     // UID
     printf("Card UID:");
     for (int i = 0; i < uid->size; i++) {
-        if (uid->uidByte[i] < 0x10)
-            printf(" 0");
-        else
-            printf(" ");
         printf("%02x",uid->uidByte[i]);
     }
     printf("\n");
